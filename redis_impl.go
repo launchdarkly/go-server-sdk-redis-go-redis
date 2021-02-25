@@ -30,7 +30,7 @@ const initedKey = "$inited"
 // All go-redis operations take a Context parameter which allows the operation to be cancelled. For
 // operations where we don't need to have a way to cancel them, we use defaultContext.
 func defaultContext() context.Context {
-	return context.TODO() // could also use context.Background()
+	return context.Background()
 }
 
 func newRedisDataStoreImpl(
