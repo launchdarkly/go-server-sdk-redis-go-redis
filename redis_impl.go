@@ -1,9 +1,10 @@
 package ldredis
 
 import (
+	"context"
 	"errors"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 
 	"gopkg.in/launchdarkly/go-sdk-common.v2/ldlog"
 	"gopkg.in/launchdarkly/go-server-sdk.v5/interfaces/ldstoretypes"
@@ -25,6 +26,12 @@ type redisDataStoreImpl struct {
 }
 
 const initedKey = "$inited"
+
+// All go-redis operations take a Context parameter which allows the operation to be cancelled. For
+// operations where we don't need to have a way to cancel them, we use defaultContext.
+func defaultContext() context.Context {
+	return context.Background()
+}
 
 func newRedisDataStoreImpl(
 	builder *DataStoreBuilder,
@@ -54,7 +61,7 @@ func newRedisDataStoreImpl(
 
 	if builder.checkOnStartup {
 		// Test connection and immediately fail initialization if it fails
-		err := client.Ping().Err()
+		err := client.Ping(defaultContext()).Err()
 		if err != nil {
 			return nil, err
 		}
@@ -80,22 +87,22 @@ func (store *redisDataStoreImpl) Init(allData []ldstoretypes.SerializedCollectio
 	for _, coll := range allData {
 		baseKey := store.featuresKey(coll.Kind)
 
-		if err := pipe.Del(baseKey).Err(); err != nil {
+		if err := pipe.Del(defaultContext(), baseKey).Err(); err != nil {
 			return err
 		}
 
 		for _, keyedItem := range coll.Items {
-			err := pipe.HSet(baseKey, store.hashTagKey(keyedItem.Key), keyedItem.Item.SerializedItem).Err()
+			err := pipe.HSet(defaultContext(), baseKey, store.hashTagKey(keyedItem.Key), keyedItem.Item.SerializedItem).Err()
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	if err := pipe.Set(store.initedKey(), "", 0).Err(); err != nil {
+	if err := pipe.Set(defaultContext(), store.initedKey(), "", 0).Err(); err != nil {
 		return err
 	}
-	_, err := pipe.Exec()
+	_, err := pipe.Exec(defaultContext())
 	return err
 }
 
@@ -103,7 +110,7 @@ func (store *redisDataStoreImpl) Get(
 	kind ldstoretypes.DataKind,
 	key string,
 ) (ldstoretypes.SerializedItemDescriptor, error) {
-	data, err := store.client.HGet(store.featuresKey(kind), store.hashTagKey(key)).Result()
+	data, err := store.client.HGet(defaultContext(), store.featuresKey(kind), store.hashTagKey(key)).Result()
 	if err != nil {
 		if err == redis.Nil {
 			store.loggers.Debugf("Key: %s not found in \"%s\"", key, kind.GetName())
@@ -118,7 +125,7 @@ func (store *redisDataStoreImpl) Get(
 func (store *redisDataStoreImpl) GetAll(
 	kind ldstoretypes.DataKind,
 ) ([]ldstoretypes.KeyedSerializedItemDescriptor, error) {
-	values, err := store.client.HGetAll(store.featuresKey(kind)).Result()
+	values, err := store.client.HGetAll(defaultContext(), store.featuresKey(kind)).Result()
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
@@ -145,7 +152,7 @@ func (store *redisDataStoreImpl) Upsert(
 	var retryErr error
 
 	for availableRetries := maxRetries; availableRetries > 0; availableRetries-- {
-		err := store.client.Watch(func(tx *redis.Tx) error {
+		err := store.client.Watch(defaultContext(), func(tx *redis.Tx) error {
 			oldItem, err := store.Get(kind, key)
 			if err != nil {
 				return err
@@ -173,10 +180,10 @@ func (store *redisDataStoreImpl) Upsert(
 				return nil
 			}
 
-			result, err := tx.TxPipelined(func(pipe redis.Pipeliner) error {
-				err = pipe.HSet(baseKey, store.hashTagKey(key), newItem.SerializedItem).Err()
+			result, err := tx.TxPipelined(defaultContext(), func(pipe redis.Pipeliner) error {
+				err = pipe.HSet(defaultContext(), baseKey, store.hashTagKey(key), newItem.SerializedItem).Err()
 				if err == nil {
-					result, err := pipe.Exec()
+					result, err := pipe.Exec(defaultContext())
 					// if exec returned nothing, it means the watch was triggered and we should retry
 					if (err == nil && len(result) == 0) || err == redis.TxFailedErr {
 						store.loggers.Debug("Concurrent modification detected, retrying")
@@ -211,12 +218,12 @@ func (store *redisDataStoreImpl) Upsert(
 }
 
 func (store *redisDataStoreImpl) IsInitialized() bool {
-	inited, _ := store.client.Exists(store.initedKey()).Result()
+	inited, _ := store.client.Exists(defaultContext(), store.initedKey()).Result()
 	return inited == 1
 }
 
 func (store *redisDataStoreImpl) IsStoreAvailable() bool {
-	_, err := store.client.Exists(store.initedKey()).Result()
+	_, err := store.client.Exists(defaultContext(), store.initedKey()).Result()
 	return err == nil
 }
 
