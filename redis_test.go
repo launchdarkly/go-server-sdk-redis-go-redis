@@ -3,7 +3,7 @@ package ldredis
 import (
 	"testing"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 
 	"gopkg.in/launchdarkly/go-server-sdk.v5/interfaces"
@@ -46,7 +46,7 @@ func clearTestData(prefix string) error {
 
 	cursor := uint64(0)
 	for {
-		cmd := client.Scan(cursor, prefix+":*", 0)
+		cmd := client.Scan(defaultContext(), cursor, prefix+":*", 0)
 		keys, nextCursor, err := cmd.Result()
 		if err != nil {
 			return err
@@ -61,7 +61,7 @@ func clearTestData(prefix string) error {
 	if len(allKeys) == 0 {
 		return nil
 	}
-	return client.Del(allKeys...).Err()
+	return client.Del(defaultContext(), allKeys...).Err()
 }
 
 func setConcurrentModificationHook(store interfaces.PersistentDataStore, hook func()) {
