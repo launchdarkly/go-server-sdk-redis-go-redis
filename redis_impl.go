@@ -85,14 +85,14 @@ func newRedisDataStoreImpl(
 func (store *redisDataStoreImpl) Init(allData []ldstoretypes.SerializedCollection) error {
 	pipe := store.client.Pipeline()
 	for _, coll := range allData {
-		baseKey := store.featuresKey(coll.Kind)
+		baseKey := store.keyForKind(coll.Kind)
 
 		if err := pipe.Del(defaultContext(), baseKey).Err(); err != nil {
 			return err
 		}
 
 		for _, keyedItem := range coll.Items {
-			err := pipe.HSet(defaultContext(), baseKey, store.hashTagKey(keyedItem.Key), keyedItem.Item.SerializedItem).Err()
+			err := pipe.HSet(defaultContext(), baseKey, keyedItem.Key, keyedItem.Item.SerializedItem).Err()
 			if err != nil {
 				return err
 			}
@@ -110,7 +110,7 @@ func (store *redisDataStoreImpl) Get(
 	kind ldstoretypes.DataKind,
 	key string,
 ) (ldstoretypes.SerializedItemDescriptor, error) {
-	data, err := store.client.HGet(defaultContext(), store.featuresKey(kind), store.hashTagKey(key)).Result()
+	data, err := store.client.HGet(defaultContext(), store.keyForKind(kind), key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			store.loggers.Debugf("Key: %s not found in \"%s\"", key, kind.GetName())
@@ -125,7 +125,7 @@ func (store *redisDataStoreImpl) Get(
 func (store *redisDataStoreImpl) GetAll(
 	kind ldstoretypes.DataKind,
 ) ([]ldstoretypes.KeyedSerializedItemDescriptor, error) {
-	values, err := store.client.HGetAll(defaultContext(), store.featuresKey(kind)).Result()
+	values, err := store.client.HGetAll(defaultContext(), store.keyForKind(kind)).Result()
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (store *redisDataStoreImpl) Upsert(
 	key string,
 	newItem ldstoretypes.SerializedItemDescriptor,
 ) (bool, error) {
-	baseKey := store.featuresKey(kind)
+	baseKey := store.keyForKind(kind)
 
 	finished := false
 	updated := false
@@ -181,7 +181,7 @@ func (store *redisDataStoreImpl) Upsert(
 			}
 
 			result, err := tx.TxPipelined(defaultContext(), func(pipe redis.Pipeliner) error {
-				err = pipe.HSet(defaultContext(), baseKey, store.hashTagKey(key), newItem.SerializedItem).Err()
+				err = pipe.HSet(defaultContext(), baseKey, key, newItem.SerializedItem).Err()
 				if err == nil {
 					result, err := pipe.Exec(defaultContext())
 					// if exec returned nothing, it means the watch was triggered and we should retry
@@ -231,17 +231,24 @@ func (store *redisDataStoreImpl) Close() error {
 	return store.client.Close()
 }
 
-func (store *redisDataStoreImpl) featuresKey(kind ldstoretypes.DataKind) string {
-	return store.prefix + ":" + kind.GetName()
+// Computes the key that is used for all items of the specified kind. The value of this key in
+// Redis is a hash where each field name is the item key and the field value is the serialized
+// item.
+func (store *redisDataStoreImpl) keyForKind(kind ldstoretypes.DataKind) string {
+	return store.maybeAddHashTag(store.prefix + ":" + kind.GetName())
 }
 
+// Computes the special key that is used to indicate that the data store contains data.
 func (store *redisDataStoreImpl) initedKey() string {
-	return store.prefix + ":" + initedKey
+	return store.maybeAddHashTag(store.prefix + ":" + initedKey)
 }
 
-// We use a hashtag in order to keep all keys in the same node (and hash slot) so we can perform
-// and use watch ... exec without issues. Only in ClusterMode
-func (store *redisDataStoreImpl) hashTagKey(key string) string {
+// In cluster mode, Redis normally spreads keys across multiple hash slots (hash slots here means
+// storage areas within the cluster-- it has nothing to do with the usual meaning of "hash" in
+// Redis). Transactions only work within a single hash slot, so we want our keys to be kept together.
+// Redis's mechanism for doing this is to prefix the keys (the top-level keys, that is-- not the
+// field names within hashes) with a string in curly braces.
+func (store *redisDataStoreImpl) maybeAddHashTag(key string) string {
 	if store.cluster {
 		return hashTag + key
 	}

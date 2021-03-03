@@ -1,6 +1,9 @@
 package ldredis
 
 import (
+	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
@@ -17,8 +20,19 @@ func TestRedisDataStore(t *testing.T) {
 		Run(t)
 }
 
+func getTestAddresses() []string {
+	if s := os.Getenv("LD_TEST_REDIS_ADDRESSES"); s != "" {
+		return strings.Split(s, " ")
+	}
+	return []string{defaultAddress}
+}
+
+func isClusterMode() bool {
+	return len(getTestAddresses()) > 1
+}
+
 func makeClientOptions() *redis.UniversalOptions {
-	return &redis.UniversalOptions{Addrs: []string{defaultAddress}}
+	return &redis.UniversalOptions{Addrs: getTestAddresses()}
 }
 
 func makeTestStore(prefix string) interfaces.PersistentDataStoreFactory {
@@ -39,29 +53,36 @@ func clearTestData(prefix string) error {
 		prefix = DefaultPrefix
 	}
 
-	client := redis.NewUniversalClient(makeClientOptions())
-	defer client.Close()
+	// The SCAN command (which we only use in this test code, not in the actual integration) needs
+	// to be handled differently depending on whether we're using a cluster or not.
 
-	var allKeys []string
-
-	cursor := uint64(0)
-	for {
-		cmd := client.Scan(defaultContext(), cursor, prefix+":*", 0)
-		keys, nextCursor, err := cmd.Result()
-		if err != nil {
-			return err
+	deleteAllKeys := func(client redis.Cmdable) error {
+		var allKeys []string
+		iter := client.Scan(defaultContext(), 0, prefix+":*", 0).Iterator()
+		for iter.Next(defaultContext()) {
+			allKeys = append(allKeys, iter.Val())
 		}
-		allKeys = append(allKeys, keys...)
-		if nextCursor == 0 { // SCAN returns 0 when the current result subset is the last one
-			break
+		if iter.Err() != nil {
+			return iter.Err()
 		}
-		cursor = nextCursor
+		if len(allKeys) == 0 {
+			return nil
+		}
+		return client.Del(defaultContext(), allKeys...).Err()
 	}
 
-	if len(allKeys) == 0 {
-		return nil
+	if isClusterMode() {
+		prefix = hashTag + prefix
+		clusterClient := redis.NewClusterClient(&redis.ClusterOptions{Addrs: getTestAddresses()})
+		defer clusterClient.Close()
+		return clusterClient.ForEachMaster(defaultContext(), func(ctx context.Context, client *redis.Client) error {
+			return deleteAllKeys(client)
+		})
+	} else {
+		client := redis.NewUniversalClient(makeClientOptions())
+		defer client.Close()
+		return deleteAllKeys(client)
 	}
-	return client.Del(defaultContext(), allKeys...).Err()
 }
 
 func setConcurrentModificationHook(store interfaces.PersistentDataStore, hook func()) {
