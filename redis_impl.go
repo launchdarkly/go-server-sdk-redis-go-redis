@@ -2,7 +2,6 @@ package ldredis
 
 import (
 	"context"
-	"errors"
 
 	"github.com/go-redis/redis/v8"
 
@@ -12,15 +11,14 @@ import (
 
 const (
 	defaultAddress = "localhost:6379"
-	hashTag        = "{ld}."
 	maxRetries     = 10
 )
 
 // Internal implementation of the PersistentDataStore interface for Redis.
 type redisDataStoreImpl struct {
 	client     redis.UniversalClient
+	redisOpts  redis.UniversalOptions
 	prefix     string
-	cluster    bool
 	loggers    ldlog.Loggers
 	testTxHook func()
 }
@@ -31,55 +29,6 @@ const initedKey = "$inited"
 // operations where we don't need to have a way to cancel them, we use defaultContext.
 func defaultContext() context.Context {
 	return context.Background()
-}
-
-func newRedisDataStoreImpl(
-	builder *DataStoreBuilder,
-	loggers ldlog.Loggers,
-) (*redisDataStoreImpl, error) {
-	redisOpts := builder.redisOpts
-
-	if builder.url != "" {
-		if len(redisOpts.Addrs) > 0 {
-			return nil, errors.New("Redis data store must be configured with either Options.Address or URL, but not both")
-		}
-		parsed, err := redis.ParseURL(builder.url)
-		if err != nil {
-			return nil, err
-		}
-		redisOpts.DB = parsed.DB
-		redisOpts.Addrs = []string{parsed.Addr}
-		redisOpts.Username = parsed.Username
-		redisOpts.Password = parsed.Password
-	}
-
-	if len(redisOpts.Addrs) == 0 {
-		redisOpts.Addrs = []string{defaultAddress}
-	}
-
-	client := redis.NewUniversalClient(&redisOpts)
-
-	if builder.checkOnStartup {
-		// Test connection and immediately fail initialization if it fails
-		err := client.Ping(defaultContext()).Err()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	impl := &redisDataStoreImpl{
-		client:  client,
-		prefix:  builder.prefix,
-		loggers: loggers,
-	}
-
-	impl.loggers.SetPrefix("RedisDataStore:")
-
-	if len(redisOpts.Addrs) > 1 {
-		impl.cluster = true
-	}
-
-	return impl, nil
 }
 
 func (store *redisDataStoreImpl) Init(allData []ldstoretypes.SerializedCollection) error {
@@ -235,22 +184,10 @@ func (store *redisDataStoreImpl) Close() error {
 // Redis is a hash where each field name is the item key and the field value is the serialized
 // item.
 func (store *redisDataStoreImpl) keyForKind(kind ldstoretypes.DataKind) string {
-	return store.maybeAddHashTag(store.prefix + ":" + kind.GetName())
+	return store.prefix + ":" + kind.GetName()
 }
 
 // Computes the special key that is used to indicate that the data store contains data.
 func (store *redisDataStoreImpl) initedKey() string {
-	return store.maybeAddHashTag(store.prefix + ":" + initedKey)
-}
-
-// In cluster mode, Redis normally spreads keys across multiple hash slots (hash slots here means
-// storage areas within the cluster-- it has nothing to do with the usual meaning of "hash" in
-// Redis). Transactions only work within a single hash slot, so we want our keys to be kept together.
-// Redis's mechanism for doing this is to prefix the keys (the top-level keys, that is-- not the
-// field names within hashes) with a string in curly braces.
-func (store *redisDataStoreImpl) maybeAddHashTag(key string) string {
-	if store.cluster {
-		return hashTag + key
-	}
-	return key
+	return store.prefix + ":" + initedKey
 }

@@ -1,7 +1,9 @@
 package ldredis
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 
@@ -13,7 +15,27 @@ const (
 	// DefaultPrefix is a string that is prepended (along with a colon) to all Redis keys used
 	// by the data store. You can change this value with the Prefix() option for
 	// NewRedisDataStoreWithDefaults, or with the "prefix" parameter to the other constructors.
+	//
+	// See also DefaultClusterPrefix.
 	DefaultPrefix = "launchdarkly"
+
+	// DefaultClusterPrefix is an additional string of "{ld}." that is added before the
+	// configured prefix (or DefaultPrefix) if you are connecting to a Redis cluster, if the
+	// prefix does not already include curly braces.
+	//
+	// For instance, if you set the prefix to "app1", and you are using a single Redis node,
+	// all keys will start with "app1:", but if you are using a cluster, they will start with
+	// "{ld}.app1:". But if you set the prefix to "{xyz}app1", then the keys will start with
+	// "{xyz}app1:" regardless of whether you are using a cluster or not.
+	//
+	// The reason for this is that in a Redis cluster, keys that begin with the same string in
+	// curly braces are grouped together into one hash slot in the cluster. That allows
+	// operations on those keys to be atomic, which the LaunchDarkly SDK Redis integration
+	// relies on.
+	//
+	// When using a single Redis node rather than a cluster, there is no special meaning for
+	// braces-- they are treated like any other characters in keys.
+	DefaultClusterPrefix = "{ld}."
 )
 
 // DataStore returns a configurable builder for a Redis-backed data store.
@@ -53,9 +75,33 @@ func (b *DataStoreBuilder) CheckOnStartup(value bool) *DataStoreBuilder {
 
 // HostAndPort is a shortcut for specifying the Redis host address as a hostname and port.
 //
-// To use multiple Redis hosts in cluster mode, use Options and set the Addrs field.
+// To use multiple Redis hosts in cluster mode, use Addresses; or, use Options and set the Addrs field.
+//
+// Calling HostAndPort overwrites any addresses previously set with Addresses or Options.
 func (b *DataStoreBuilder) HostAndPort(host string, port int) *DataStoreBuilder {
-	b.redisOpts.Addrs = []string{fmt.Sprintf("%s:%d", host, port)}
+	return b.Addresses(fmt.Sprintf("%s:%d", host, port))
+}
+
+// Addresses specifies Redis host addresses. This is a shortcut for setting the Addrs field
+// with Options.
+//
+// If multiple addresses are given, and a Master has been set, this is treated as a list of
+// Redis Sentinel nodes.
+//
+// If multiple addresses are given, and no Master has been set, it is treated as a list of
+// cluster nodes.
+//
+// If no addresses are given, the default address of localhost:6379 will be used.
+//
+// Calling Addresses overwrites any addresses previously set with HostAndPort or Options.
+func (b *DataStoreBuilder) Addresses(addresses ...string) *DataStoreBuilder {
+	if addresses == nil {
+		b.redisOpts.Addrs = nil
+	} else {
+		copied := make([]string, len(addresses))
+		copy(copied, addresses)
+		b.redisOpts.Addrs = copied
+	}
 	return b
 }
 
@@ -70,6 +116,8 @@ func (b *DataStoreBuilder) Prefix(prefix string) *DataStoreBuilder {
 }
 
 // Options sets all of the parameters supported by the go-redis UniversalOptions type.
+//
+// This overwrites any previous setting of HostAndPort or Addresses.
 func (b *DataStoreBuilder) Options(options redis.UniversalOptions) *DataStoreBuilder {
 	b.redisOpts = options
 	return b
@@ -90,12 +138,61 @@ func (b *DataStoreBuilder) URL(url string) *DataStoreBuilder {
 	return b
 }
 
+// Master sets the master hostname, when using Redis Sentinel.
+func (b *DataStoreBuilder) Master(masterName string) *DataStoreBuilder {
+	b.redisOpts.MasterName = masterName
+	return b
+}
+
 // CreatePersistentDataStore is called internally by the SDK to create the data store implementation object.
 func (b *DataStoreBuilder) CreatePersistentDataStore(
 	context interfaces.ClientContext,
 ) (interfaces.PersistentDataStore, error) {
-	store, err := newRedisDataStoreImpl(b, context.GetLogging().GetLoggers())
-	return store, err
+	redisOpts := b.redisOpts
+	loggers := context.GetLogging().GetLoggers()
+	loggers.SetPrefix("RedisDataStore:")
+
+	if b.url != "" {
+		if len(redisOpts.Addrs) > 0 {
+			return nil, errors.New("Redis data store must be configured with either Options.Address or URL, but not both")
+		}
+		parsed, err := redis.ParseURL(b.url)
+		if err != nil {
+			return nil, err
+		}
+		redisOpts.DB = parsed.DB
+		redisOpts.Addrs = []string{parsed.Addr}
+		redisOpts.Username = parsed.Username
+		redisOpts.Password = parsed.Password
+	}
+
+	if len(redisOpts.Addrs) == 0 {
+		redisOpts.Addrs = []string{defaultAddress}
+	}
+
+	client := redis.NewUniversalClient(&redisOpts)
+
+	if b.checkOnStartup {
+		// Test connection and immediately fail initialization if it fails
+		err := client.Ping(defaultContext()).Err()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	prefix := b.prefix
+	if len(redisOpts.Addrs) > 1 {
+		if !strings.Contains(prefix, "{") {
+			prefix = DefaultClusterPrefix + prefix
+		}
+	}
+
+	return &redisDataStoreImpl{
+		client:    client,
+		redisOpts: redisOpts,
+		prefix:    prefix,
+		loggers:   loggers,
+	}, nil
 }
 
 // DescribeConfiguration is used internally by the SDK to inspect the configuration.

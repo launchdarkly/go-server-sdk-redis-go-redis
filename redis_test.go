@@ -72,7 +72,7 @@ func clearTestData(prefix string) error {
 	}
 
 	if isClusterMode() {
-		prefix = hashTag + prefix
+		prefix = DefaultClusterPrefix + prefix
 		clusterClient := redis.NewClusterClient(&redis.ClusterOptions{Addrs: getTestAddresses()})
 		defer clusterClient.Close()
 		return clusterClient.ForEachMaster(defaultContext(), func(ctx context.Context, client *redis.Client) error {
