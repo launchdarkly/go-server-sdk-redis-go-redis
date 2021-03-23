@@ -155,10 +155,10 @@ func (b *DataStoreBuilder) CreatePersistentDataStore(
 	loggers := context.GetLogging().GetLoggers()
 	loggers.SetPrefix("RedisDataStore:")
 	return &redisDataStoreImpl{
-		client: client,
+		client:    client,
 		redisOpts: redisOpts,
-		prefix: prefix,
-		loggers: loggers,
+		prefix:    prefix,
+		loggers:   loggers,
 	}, nil
 }
 
@@ -173,10 +173,10 @@ func (b *DataStoreBuilder) CreateBigSegmentStore(
 	loggers := context.GetLogging().GetLoggers()
 	loggers.SetPrefix("RedisBigSegmentStore:")
 	return &redisBigSegmentStoreImpl{
-		client: client,
+		client:    client,
 		redisOpts: redisOpts,
-		prefix: prefix,
-		loggers: loggers,
+		prefix:    prefix,
+		loggers:   loggers,
 	}, nil
 }
 
@@ -184,7 +184,7 @@ func (b *DataStoreBuilder) validateAndCreateClient() (
 	redis.UniversalClient, redis.UniversalOptions, string, error,
 ) {
 	redisOpts := b.redisOpts
-	
+
 	if b.url != "" {
 		if len(redisOpts.Addrs) > 0 {
 			return nil, redisOpts, "",

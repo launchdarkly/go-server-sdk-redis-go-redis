@@ -2,6 +2,7 @@ package ldredis
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"gopkg.in/launchdarkly/go-server-sdk.v5/interfaces"
@@ -18,17 +19,13 @@ func TestBigSegmentStore(t *testing.T) {
 	defer client.Close()
 
 	setTestMetadata := func(prefix string, metadata interfaces.BigSegmentStoreMetadata) error {
-		if prefix == "" {
-			prefix = DefaultPrefix
-		}
+		prefix = realTestPrefix(prefix)
 		return client.Set(defaultContext(), bigSegmentsSyncTimeKey(prefix),
 			fmt.Sprintf("%d", metadata.LastUpToDate), 0).Err()
 	}
 
 	setTestSegments := func(prefix string, userHashKey string, included []string, excluded []string) error {
-		if prefix == "" {
-			prefix = DefaultPrefix
-		}
+		prefix = realTestPrefix(prefix)
 		for _, inc := range included {
 			err := client.SAdd(defaultContext(), bigSegmentsIncludeKey(prefix, userHashKey), inc).Err()
 			if err != nil {
@@ -52,4 +49,16 @@ func TestBigSegmentStore(t *testing.T) {
 		setTestMetadata,
 		setTestSegments,
 	).Run(t)
+}
+
+func realTestPrefix(prefix string) string {
+	if prefix == "" {
+		prefix = DefaultPrefix
+	}
+	if len(getTestAddresses()) > 1 {
+		if !strings.Contains(prefix, "{") {
+			prefix = DefaultClusterPrefix + prefix
+		}
+	}
+	return prefix
 }
