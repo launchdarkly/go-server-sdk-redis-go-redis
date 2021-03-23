@@ -144,21 +144,55 @@ func (b *DataStoreBuilder) Master(masterName string) *DataStoreBuilder {
 	return b
 }
 
-// CreatePersistentDataStore is called internally by the SDK to create the data store implementation object.
+// CreatePersistentDataStore is called internally by the SDK to create a data store implementation object.
 func (b *DataStoreBuilder) CreatePersistentDataStore(
 	context interfaces.ClientContext,
 ) (interfaces.PersistentDataStore, error) {
-	redisOpts := b.redisOpts
+	client, redisOpts, prefix, err := b.validateAndCreateClient()
+	if err != nil {
+		return nil, err
+	}
 	loggers := context.GetLogging().GetLoggers()
 	loggers.SetPrefix("RedisDataStore:")
+	return &redisDataStoreImpl{
+		client: client,
+		redisOpts: redisOpts,
+		prefix: prefix,
+		loggers: loggers,
+	}, nil
+}
 
+// CreateBigSegmentStore is called internally by the SDK to create a data store implementation object.
+func (b *DataStoreBuilder) CreateBigSegmentStore(
+	context interfaces.ClientContext,
+) (interfaces.BigSegmentStore, error) {
+	client, redisOpts, prefix, err := b.validateAndCreateClient()
+	if err != nil {
+		return nil, err
+	}
+	loggers := context.GetLogging().GetLoggers()
+	loggers.SetPrefix("RedisBigSegmentStore:")
+	return &redisBigSegmentStoreImpl{
+		client: client,
+		redisOpts: redisOpts,
+		prefix: prefix,
+		loggers: loggers,
+	}, nil
+}
+
+func (b *DataStoreBuilder) validateAndCreateClient() (
+	redis.UniversalClient, redis.UniversalOptions, string, error,
+) {
+	redisOpts := b.redisOpts
+	
 	if b.url != "" {
 		if len(redisOpts.Addrs) > 0 {
-			return nil, errors.New("Redis data store must be configured with either Options.Address or URL, but not both")
+			return nil, redisOpts, "",
+				errors.New("Redis data store must be configured with either Options.Address or URL, but not both")
 		}
 		parsed, err := redis.ParseURL(b.url)
 		if err != nil {
-			return nil, err
+			return nil, redisOpts, "", err
 		}
 		redisOpts.DB = parsed.DB
 		redisOpts.Addrs = []string{parsed.Addr}
@@ -176,7 +210,7 @@ func (b *DataStoreBuilder) CreatePersistentDataStore(
 		// Test connection and immediately fail initialization if it fails
 		err := client.Ping(defaultContext()).Err()
 		if err != nil {
-			return nil, err
+			return nil, redisOpts, "", err
 		}
 	}
 
@@ -187,12 +221,7 @@ func (b *DataStoreBuilder) CreatePersistentDataStore(
 		}
 	}
 
-	return &redisDataStoreImpl{
-		client:    client,
-		redisOpts: redisOpts,
-		prefix:    prefix,
-		loggers:   loggers,
-	}, nil
+	return client, redisOpts, prefix, nil
 }
 
 // DescribeConfiguration is used internally by the SDK to inspect the configuration.
