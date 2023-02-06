@@ -1,9 +1,8 @@
 package ldredis
 
 import (
+	"github.com/launchdarkly/go-server-sdk/v6/subsystems"
 	"testing"
-
-	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,7 +11,7 @@ import (
 func TestDataSourceBuilder(t *testing.T) {
 	makeStore := func(b *DataStoreBuilder) *redisDataStoreImpl {
 		b.CheckOnStartup(false)
-		store, err := b.CreatePersistentDataStore(testhelpers.NewSimpleClientContext(""))
+		store, err := b.Build(subsystems.BasicClientContext{})
 		require.NoError(t, err)
 		return store.(*redisDataStoreImpl)
 	}

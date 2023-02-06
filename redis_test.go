@@ -2,15 +2,15 @@ package ldredis
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 
-	"gopkg.in/launchdarkly/go-server-sdk.v5/interfaces"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers/storetest"
+	"github.com/launchdarkly/go-server-sdk/v6/subsystems"
+	"github.com/launchdarkly/go-server-sdk/v6/testhelpers/storetest"
 )
 
 func TestRedisDataStore(t *testing.T) {
@@ -35,11 +35,11 @@ func makeClientOptions() *redis.UniversalOptions {
 	return &redis.UniversalOptions{Addrs: getTestAddresses()}
 }
 
-func makeTestStore(prefix string) interfaces.PersistentDataStoreFactory {
+func makeTestStore(prefix string) subsystems.ComponentConfigurer[subsystems.PersistentDataStore] {
 	return DataStore().Prefix(prefix).Options(*makeClientOptions())
 }
 
-func makeFailedStore() interfaces.PersistentDataStoreFactory {
+func makeFailedStore() subsystems.ComponentConfigurer[subsystems.PersistentDataStore] {
 	// Here we ensure that all Redis operations will fail by using an invalid hostname.
 	return DataStore().URL("redis://not-a-real-host").CheckOnStartup(false)
 }
@@ -85,6 +85,6 @@ func clearTestData(prefix string) error {
 	}
 }
 
-func setConcurrentModificationHook(store interfaces.PersistentDataStore, hook func()) {
+func setConcurrentModificationHook(store subsystems.PersistentDataStore, hook func()) {
 	store.(*redisDataStoreImpl).testTxHook = hook
 }
