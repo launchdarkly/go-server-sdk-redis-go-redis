@@ -3,12 +3,11 @@ package ldredis
 import (
 	"errors"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"strings"
 
-	"github.com/go-redis/redis/v8"
-
-	"gopkg.in/launchdarkly/go-sdk-common.v2/ldvalue"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/interfaces"
+	"github.com/launchdarkly/go-sdk-common/v3/ldvalue"
+	"github.com/launchdarkly/go-server-sdk/v6/subsystems"
 )
 
 const (
@@ -54,7 +53,7 @@ func DataStore() *DataStoreBuilder {
 //
 // Builder calls can be chained, for example:
 //
-//     config.DataStore = ldredis.DataStore().URL("redis://hostname").Prefix("prefix")
+//	config.DataStore = ldredis.DataStore().URL("redis://hostname").Prefix("prefix")
 //
 // You do not need to call the builder's CreatePersistentDataStore() method yourself to build the
 // actual data store; that will be done by the SDK.
@@ -144,12 +143,12 @@ func (b *DataStoreBuilder) Master(masterName string) *DataStoreBuilder {
 	return b
 }
 
-// CreatePersistentDataStore is called internally by the SDK to create the data store implementation object.
-func (b *DataStoreBuilder) CreatePersistentDataStore(
-	context interfaces.ClientContext,
-) (interfaces.PersistentDataStore, error) {
+// Build is called internally by the SDK to create the data store implementation object.
+func (b *DataStoreBuilder) Build(
+	context subsystems.ClientContext,
+) (subsystems.PersistentDataStore, error) {
 	redisOpts := b.redisOpts
-	loggers := context.GetLogging().GetLoggers()
+	loggers := context.GetLogging().Loggers
 	loggers.SetPrefix("RedisDataStore:")
 
 	if b.url != "" {
