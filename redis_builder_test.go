@@ -32,7 +32,9 @@ func TestDataSourceBuilder(t *testing.T) {
 
 		assert.Equal(t, DefaultPrefix, makeStore(DataStore().Prefix("")).prefix)
 
-		// assert.Equal(t, DefaultClusterPrefix + "p", makeStore(DataStore().Prefix("p").))
+		assert.Equal(t, DefaultClusterPrefix+"p", makeStore(
+			DataStore().Addresses("a", "b").Prefix("p")).prefix,
+		)
 	})
 
 	t.Run("URL", func(t *testing.T) {

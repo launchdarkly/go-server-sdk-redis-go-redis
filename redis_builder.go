@@ -55,7 +55,7 @@ func DataStore() *DataStoreBuilder {
 //
 //	config.DataStore = ldredis.DataStore().URL("redis://hostname").Prefix("prefix")
 //
-// You do not need to call the builder's CreatePersistentDataStore() method yourself to build the
+// You do not need to call the builder's Build() method yourself to build the
 // actual data store; that will be done by the SDK.
 type DataStoreBuilder struct {
 	prefix         string
@@ -114,7 +114,7 @@ func (b *DataStoreBuilder) Prefix(prefix string) *DataStoreBuilder {
 	return b
 }
 
-// Options sets all of the parameters supported by the go-redis UniversalOptions type.
+// Options sets all the parameters supported by the go-redis UniversalOptions type.
 //
 // This overwrites any previous setting of HostAndPort or Addresses.
 func (b *DataStoreBuilder) Options(options redis.UniversalOptions) *DataStoreBuilder {
@@ -124,7 +124,7 @@ func (b *DataStoreBuilder) Options(options redis.UniversalOptions) *DataStoreBui
 
 // URL specifies the Redis host URL. If not specified, the default value is DefaultURL.
 //
-// Note that some Redis client features can specified either as part of the URL or with Options. For instance,
+// Note that some Redis client features can be specified either as part of the URL or with Options. For instance,
 // the Password and DB fields in Options can be part of a "redis://" URL
 // (https://www.iana.org/assignments/uri-schemes/prov/redis), and TLS can be enabled either by setting the
 // TLSConfig in Options or by using a "rediss://" URL (https://www.iana.org/assignments/uri-schemes/prov/rediss).
@@ -153,7 +153,7 @@ func (b *DataStoreBuilder) Build(
 
 	if b.url != "" {
 		if len(redisOpts.Addrs) > 0 {
-			return nil, errors.New("Redis data store must be configured with either Options.Address or URL, but not both")
+			return nil, errors.New("redis data store must be configured with either Options.Address or URL, but not both")
 		}
 		parsed, err := redis.ParseURL(b.url)
 		if err != nil {
