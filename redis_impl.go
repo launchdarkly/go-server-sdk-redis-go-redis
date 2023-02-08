@@ -2,10 +2,9 @@ package ldredis
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
-
 	"github.com/launchdarkly/go-sdk-common/v3/ldlog"
 	"github.com/launchdarkly/go-server-sdk/v6/subsystems/ldstoretypes"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
