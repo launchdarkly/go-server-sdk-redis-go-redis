@@ -6,9 +6,9 @@ This library provides a [Redis](https://redis.io/)-backed persistence mechanism 
 
 The Redis client implementation it uses is [`go-redis`](https://github.com/go-redis/redis). This distinguishes it from the other Go SDK Redis integration, [`go-server-sdk-redis-redigo`](https://github.com/launchdarkly/go-server-sdk-redis-redigo), which uses the [`redigo`](https://github.com/gomodule/redigo) client (therefore the two projects have somewhat long and repetitive names). The main difference between the two is that `go-redis` supports cluster mode and `redigo` does not.
 
-This version of the library requires at least version 5.0.0 of the LaunchDarkly Go SDK. In earlier Go SDK versions, the `ldredis` package (which used `redigo`) was built into the SDK (`gopkg.in/launchdarkly/go-server-sdk.v4/ldredis`).
+This version of the library requires at least version 6.0.0 of the LaunchDarkly Go SDK.
 
-The minimum Go version is 1.14.
+The minimum Go version is 1.19.
 
 For more information, see also: [Using a persistent feature store](https://docs.launchdarkly.com/sdk/concepts/feature-store).
 
