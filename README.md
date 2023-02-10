@@ -2,6 +2,8 @@
 
 [![Circle CI](https://circleci.com/gh/launchdarkly/go-server-sdk-redis-go-redis.svg?style=shield)](https://circleci.com/gh/launchdarkly/go-server-sdk-redis-go-redis) [![Documentation](https://img.shields.io/static/v1?label=go.dev&message=reference&color=00add8)](https://pkg.go.dev/github.com/launchdarkly/go-server-sdk-redis-go-redis)
 
+_This version of the SDK is a beta version and should not be considered ready for production use while this message is visible._
+
 This library provides a [Redis](https://redis.io/)-backed persistence mechanism (data store) for the [LaunchDarkly Go SDK](https://github.com/launchdarkly/go-server-sdk), replacing the default in-memory data store.
 
 The Redis client implementation it uses is [`go-redis`](https://github.com/redis/go-redis). This distinguishes it from the other Go SDK Redis integration, [`go-server-sdk-redis-redigo`](https://github.com/launchdarkly/go-server-sdk-redis-redigo), which uses the [`redigo`](https://github.com/gomodule/redigo) client (therefore the two projects have somewhat long and repetitive names). The main difference between the two is that `go-redis` supports cluster mode and `redigo` does not.
