@@ -3,11 +3,12 @@ package ldredis
 import (
 	"errors"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"strings"
 
+	"github.com/redis/go-redis/v9"
+
 	"github.com/launchdarkly/go-sdk-common/v3/ldvalue"
-	"github.com/launchdarkly/go-server-sdk/v6/subsystems"
+	"github.com/launchdarkly/go-server-sdk/v7/subsystems"
 )
 
 const (

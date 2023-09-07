@@ -3,8 +3,8 @@ module github.com/launchdarkly/go-server-sdk-redis-go-redis
 go 1.19
 
 require (
-	github.com/launchdarkly/go-sdk-common/v3 v3.0.0
-	github.com/launchdarkly/go-server-sdk/v6 v6.0.1
+	github.com/launchdarkly/go-sdk-common/v3 v3.0.1
+	github.com/launchdarkly/go-server-sdk/v7 v7.0.0
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/stretchr/testify v1.8.1
 )
@@ -19,9 +19,9 @@ require (
 	github.com/launchdarkly/ccache v1.1.0 // indirect
 	github.com/launchdarkly/eventsource v1.6.2 // indirect
 	github.com/launchdarkly/go-jsonstream/v3 v3.0.0 // indirect
-	github.com/launchdarkly/go-sdk-events/v2 v2.0.0 // indirect
+	github.com/launchdarkly/go-sdk-events/v3 v3.0.0 // indirect
 	github.com/launchdarkly/go-semver v1.0.2 // indirect
-	github.com/launchdarkly/go-server-sdk-evaluation/v2 v2.0.1 // indirect
+	github.com/launchdarkly/go-server-sdk-evaluation/v3 v3.0.0 // indirect
 	github.com/launchdarkly/go-test-helpers/v3 v3.0.2 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
@@ -30,3 +30,11 @@ require (
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/launchdarkly/go-sdk-common/v3 => github.com/launchdarkly/go-sdk-common-private/v3 v3.0.0-alpha.6.0.20230829225529-e3a87e3952ac
+
+replace github.com/launchdarkly/go-server-sdk/v7 => github.com/launchdarkly/go-server-sdk-private/v7 v7.0.0-20230831202925-f824718cfcca
+
+replace github.com/launchdarkly/go-server-sdk-evaluation/v3 => github.com/launchdarkly/go-server-sdk-evaluation-private/v3 v3.0.0-20230829233102-4fc0fa5a3369
+
+replace github.com/launchdarkly/go-sdk-events/v3 => github.com/launchdarkly/go-sdk-events-private/v3 v3.0.0-20230829233031-ed3dc538caac
