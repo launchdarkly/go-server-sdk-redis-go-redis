@@ -26,6 +26,67 @@ jobs:
     with:
       go-version: ${{ matrix.go-version }}
 
+  test-linux-redis-cluster:
+    name: ${{ format('Linux, Go {0} with Redis Cluster', matrix.go-version) }}
+    runs-on: ubuntu-latest
+    env:
+      LD_TEST_REDIS_ADDRESSES: redis-node1:6379 redis-node2:6379 redis-node3:6379
+    needs: go-versions
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ${{ fromJSON(needs.go-versions.outputs.matrix) }}
+    services:
+      redis-node1:
+        image: bitnami/redis-cluster:latest
+        env:
+          ALLOW_EMPTY_PASSWORD: yes
+          REDIS_NODES: redis-node1 redis-node2 redis-node3
+          REDIS_CLUSTER_REPLICAS: 0
+        ports:
+          - 6379:6379
+
+      redis-node2:
+        image: bitnami/redis-cluster:latest
+        env:
+          ALLOW_EMPTY_PASSWORD: yes
+          REDIS_NODES: redis-node1 redis-node2 redis-node3
+          REDIS_CLUSTER_REPLICAS: 0
+        ports:
+          - 6379:6379
+
+      redis-node3:
+        image: bitnami/redis-cluster:latest
+        env:
+          ALLOW_EMPTY_PASSWORD: yes
+          REDIS_NODES: redis-node1 redis-node2 redis-node3
+          REDIS_CLUSTER_REPLICAS: 0
+        ports:
+          - 6379:6379
+
+      redis-cluster-init:
+        image: bitnami/redis-cluster:latest
+        env:
+          ALLOW_EMPTY_PASSWORD: yes
+          REDIS_CLUSTER_CREATOR: yes
+          REDIS_NODES: redis-node1 redis-node2 redis-node3
+          REDIS_CLUSTER_REPLICAS: 0
+        ports:
+          - 6379:6379
+    steps:
+     - uses: actions/checkout@v4
+     - name: Setup Go ${{ inputs.go-version }}
+       uses: actions/setup-go@v5
+       with:
+         go-version: ${{ inputs.go-version }}
+     - uses: ./.github/actions/unit-tests
+       with:
+         lint: 'true'
+     - uses: ./.github/actions/coverage
+       with:
+         enforce: 'false'
+
+
   test-windows:
     name: ${{ format('Windows, Go {0}', matrix.go-version) }}
     runs-on: windows-2022
@@ -42,9 +103,6 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Install Redis
         shell: powershell
-        # Note, the redis-64 package is deprecated and no longer maintained so it does
-        # not include improvements made in Redis after Redis 3.x, and it would not be
-        # good to use it in production. But for our testing purposes here it's adequate.
         run: |
           choco install redis
       - name: Test
