@@ -40,7 +40,14 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
-      - name: Setup Redis
-        uses: supercharge/redis-github-action@ea9b21c6ecece47bd99595c532e481390ea0f044
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run Redis
+        run: docker run -d -p 6379:6379 --name redis-server -p 6379:6379 redis
+
+      - name: Check Redis connection
+        run: docker run --rm --link redis-server:redis redis redis-cli -h redis ping
+
       - name: Test
         run: go test -race ./...
