@@ -29,16 +29,6 @@ jobs:
   test-windows:
     name: ${{ format('Windows, Go {0}', matrix.go-version) }}
     runs-on: windows-2022
-    services:
-      redis:
-        image: redis
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
     needs: go-versions
     strategy:
       fail-fast: false
@@ -50,5 +40,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
+      - name: Setup Redis
+        uses: supercharge/redis-github-action@ea9b21c6ecece47bd99595c532e481390ea0f044
       - name: Test
         run: go test -race ./...
