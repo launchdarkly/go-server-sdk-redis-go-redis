@@ -40,14 +40,12 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
-      - name: Setup Docker
-        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db
-
-      - name: Run Redis
-        run: docker run -d -p 6379:6379 --name redis-server -p 6379:6379 redis
-
-      - name: Check Redis connection
-        run: docker run --rm --link redis-server:redis redis redis-cli -h redis ping
-
+      - name: Install Redis
+        shell: powershell
+        # Note, the redis-64 package is deprecated and no longer maintained so it does
+        # not include improvements made in Redis after Redis 3.x, and it would not be
+        # good to use it in production. But for our testing purposes here it's adequate.
+        run: |
+          choco install redis-64
       - name: Test
         run: go test -race ./...
