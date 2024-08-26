@@ -2,9 +2,7 @@ package ldredis
 
 import (
 	"context"
-	"errors"
 	"github.com/redis/go-redis/v9"
-	"net"
 	"os"
 	"strings"
 	"testing"
@@ -47,7 +45,7 @@ func makeFailedStore() subsystems.ComponentConfigurer[subsystems.PersistentDataS
 }
 
 func verifyFailedStoreError(t assert.TestingT, err error) {
-	assert.True(t, errors.Is(err, &net.DNSError{}))
+	assert.Contains(t, err.Error(), "lookup")
 }
 
 func clearTestData(prefix string) error {
