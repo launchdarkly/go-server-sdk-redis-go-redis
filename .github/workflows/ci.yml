@@ -46,6 +46,6 @@ jobs:
         # not include improvements made in Redis after Redis 3.x, and it would not be
         # good to use it in production. But for our testing purposes here it's adequate.
         run: |
-          choco install redis-64
+          choco install redis
       - name: Test
         run: go test -race ./...
