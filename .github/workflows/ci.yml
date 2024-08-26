@@ -30,7 +30,7 @@ jobs:
     name: ${{ format('Linux, Go {0} with Redis Cluster', matrix.go-version) }}
     runs-on: ubuntu-latest
     env:
-      LD_TEST_REDIS_ADDRESSES: redis-node1:6379 redis-node2:6379 redis-node3:6379
+      LD_TEST_REDIS_ADDRESSES: redis-node1:6376 redis-node2:6377 redis-node3:6378
     needs: go-versions
     strategy:
       fail-fast: false
@@ -44,7 +44,7 @@ jobs:
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
         ports:
-          - 6379:6379
+          - 6376:6379
 
       redis-node2:
         image: bitnami/redis-cluster:latest
@@ -53,7 +53,7 @@ jobs:
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
         ports:
-          - 6379:6379
+          - 6377:6379
 
       redis-node3:
         image: bitnami/redis-cluster:latest
@@ -62,7 +62,7 @@ jobs:
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
         ports:
-          - 6379:6379
+          - 6378:6379
 
       redis-cluster-init:
         image: bitnami/redis-cluster:latest
@@ -71,8 +71,7 @@ jobs:
           REDIS_CLUSTER_CREATOR: yes
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
-        ports:
-          - 6379:6379
+
     steps:
      - uses: actions/checkout@v4
      - name: Setup Go ${{ inputs.go-version }}
