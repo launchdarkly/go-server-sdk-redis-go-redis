@@ -33,6 +33,6 @@ runs:
       if: steps.test-coverage.outputs.coverage_status != '0'
       run: |
         echo "Code isn't fully covered!"
-        if [ "${{ inputs.enforce }}" == "true" ]; 
+        if [[ "${{ inputs.enforce }}" == "true" ]]; then
           exit 1
         fi
