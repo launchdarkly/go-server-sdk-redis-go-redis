@@ -11,6 +11,14 @@ jobs:
   unit-test-and-coverage:
     runs-on: ubuntu-latest
     name: 'Unit Tests and Coverage'
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go ${{ inputs.go-version }}
