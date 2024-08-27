@@ -21,7 +21,7 @@ clean:
 	go clean
 
 test:
-	go test -race -v ./...
+	CGO_ENABLED=1 go test -race -v ./...
 
 test-coverage: $(COVERAGE_PROFILE_RAW)
 	if [ -x "$(GOPATH)/bin/go-coverage-enforcer)" ]; then go get github.com/launchdarkly-labs/go-coverage-enforcer; fi

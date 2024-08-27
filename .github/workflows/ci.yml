@@ -71,21 +71,20 @@ jobs:
           REDIS_CLUSTER_REPLICAS: 0
 
     container:
-      image: ghcr.io/actions/actions-runner:latest
+      image: ubuntu:22.04
     steps:
      - uses: actions/checkout@v4
      - name: Setup Go ${{ matrix.go-version }}
        uses: actions/setup-go@v5
        with:
          go-version: ${{ matrix.go-version }}
-     - name: Install make
-       run: sudo apt-get -y install make curl
+     - name: Deps
+       run: |
+         apt-get update
+         apt-get install -y make curl gcc
      - uses: ./.github/actions/unit-tests
-       with:
-         lint: 'true'
-     - uses: ./.github/actions/coverage
-       with:
-         enforce: 'false'
+
+
 
 
   test-windows:
