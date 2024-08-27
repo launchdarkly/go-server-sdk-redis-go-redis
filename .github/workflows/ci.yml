@@ -70,12 +70,16 @@ jobs:
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
 
+    container:
+      image: ghcr.io/actions/actions-runner:latest
     steps:
      - uses: actions/checkout@v4
-     - name: Setup Go ${{ inputs.go-version }}
+     - name: Setup Go ${{ matrix.go-version }}
        uses: actions/setup-go@v5
        with:
-         go-version: ${{ inputs.go-version }}
+         go-version: ${{ matrix.go-version }}
+     - name: Install make
+       run: sudo apt-get -y install make curl
      - uses: ./.github/actions/unit-tests
        with:
          lint: 'true'
