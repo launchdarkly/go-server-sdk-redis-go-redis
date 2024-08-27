@@ -43,8 +43,7 @@ jobs:
           ALLOW_EMPTY_PASSWORD: yes
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
-        ports:
-          - 6376:6379
+
 
       redis-node2:
         image: bitnami/redis-cluster:latest
@@ -52,8 +51,7 @@ jobs:
           ALLOW_EMPTY_PASSWORD: yes
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
-        ports:
-          - 6377:6379
+
 
       redis-node3:
         image: bitnami/redis-cluster:latest
@@ -61,8 +59,7 @@ jobs:
           ALLOW_EMPTY_PASSWORD: yes
           REDIS_NODES: redis-node1 redis-node2 redis-node3
           REDIS_CLUSTER_REPLICAS: 0
-        ports:
-          - 6378:6379
+
 
       redis-cluster-init:
         image: bitnami/redis-cluster:latest
