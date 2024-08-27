@@ -30,7 +30,7 @@ jobs:
     name: ${{ format('Linux, Go {0} with Redis Cluster', matrix.go-version) }}
     runs-on: ubuntu-latest
     env:
-      LD_TEST_REDIS_ADDRESSES: redis-node1:6376 redis-node2:6377 redis-node3:6378
+      LD_TEST_REDIS_ADDRESSES: redis-node1:6379 redis-node2:6379 redis-node3:6379
     needs: go-versions
     strategy:
       fail-fast: false
