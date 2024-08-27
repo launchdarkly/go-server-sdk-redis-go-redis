@@ -82,6 +82,8 @@ jobs:
          apt-get update
          apt-get install -y make curl gcc
      - uses: ./.github/actions/unit-tests
+       with:
+         upload-results: 'false'
 
 
 

@@ -5,6 +5,10 @@ inputs:
     description: 'Whether to run linters.'
     required: false
     default: 'false'
+  upload-results:
+    description: 'Whether to upload test results.'
+    required: false
+    default: 'true'
 
 runs:
   using: composite
@@ -22,7 +26,7 @@ runs:
       run: make test | tee raw_report.txt
 
     - name: Process test results
-      if: steps.test.outcome == 'success'
+      if: steps.test.outcome == 'success' && inputs.upload-results == 'true'
       id: process-test
       shell: bash
       run: go run github.com/jstemmer/go-junit-report@v0.9.1 < raw_report.txt > junit_report.xml
