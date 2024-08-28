@@ -106,7 +106,7 @@ jobs:
         shell: powershell
         run: |
           choco install redis
-          redis-server 
+          Start-Process redis-server -NoNewWindow
           
 
       - name: Test
