@@ -1,5 +1,5 @@
 
-GOLANGCI_LINT_VERSION=v1.48.0
+GOLANGCI_LINT_VERSION=v1.60.1
 
 LINTER=./bin/golangci-lint
 LINTER_VERSION_FILE=./bin/.golangci-lint-version-$(GOLANGCI_LINT_VERSION)
@@ -21,7 +21,7 @@ clean:
 	go clean
 
 test:
-	go test -race -v ./...
+	CGO_ENABLED=1 go test -race -v ./...
 
 test-coverage: $(COVERAGE_PROFILE_RAW)
 	if [ -x "$(GOPATH)/bin/go-coverage-enforcer)" ]; then go get github.com/launchdarkly-labs/go-coverage-enforcer; fi
