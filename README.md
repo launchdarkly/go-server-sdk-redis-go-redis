@@ -1,6 +1,7 @@
 # LaunchDarkly Server-side SDK for Go - Redis integration with go-redis
 
-[![Circle CI](https://circleci.com/gh/launchdarkly/go-server-sdk-redis-go-redis.svg?style=shield)](https://circleci.com/gh/launchdarkly/go-server-sdk-redis-go-redis) [![Documentation](https://img.shields.io/static/v1?label=go.dev&message=reference&color=00add8)](https://pkg.go.dev/github.com/launchdarkly/go-server-sdk-redis-go-redis)
+[![Actions Status](https://github.com/launchdarkly/go-server-sdk-redis-go/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/launchdarkly/go-server-sdk-redis-go/actions/workflows/ci.yml)
+ [![Documentation](https://img.shields.io/static/v1?label=go.dev&message=reference&color=00add8)](https://pkg.go.dev/github.com/launchdarkly/go-server-sdk-redis-go-redis)
 
 _This version of the SDK is a beta version and should not be considered ready for production use while this message is visible._
 
