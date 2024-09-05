@@ -106,8 +106,7 @@ jobs:
         shell: powershell
         run: |
           choco install redis
-          Start-Process redis-server -NoNewWindow
-          
+          Start-Process redis-server -ArgumentList "--bind 127.0.0.1 ::1" -NoNewWindow
 
       - name: Test
         run: go test -count=1 -race ./...
