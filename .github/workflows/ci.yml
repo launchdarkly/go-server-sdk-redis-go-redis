@@ -104,7 +104,11 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Install Redis
         shell: powershell
+        # The process needs to be started with Start-Process, which creates a new process independent
+        # of this shell. That way it can run in the background when we move on to the Go test step.
         run: |
           choco install redis
+          Start-Process redis-server
+
       - name: Test
-        run: go test -race ./...
+        run: go test -count=1 -race ./...
