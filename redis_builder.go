@@ -165,10 +165,6 @@ func (b *DataStoreBuilder) Build(
 		redisOpts.Password = parsed.Password
 	}
 
-	if len(redisOpts.Addrs) == 0 {
-		redisOpts.Addrs = []string{defaultAddress}
-	}
-
 	client := redis.NewUniversalClient(&redisOpts)
 
 	if b.checkOnStartup {
