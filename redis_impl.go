@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	defaultAddress = ":6379"
+	defaultAddress = "localhost:6379"
 	maxRetries     = 10
 )
 

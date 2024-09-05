@@ -3,7 +3,6 @@ package ldredis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"net"
 	"os"
 	"strings"
 	"testing"
@@ -33,10 +32,7 @@ func isClusterMode() bool {
 }
 
 func makeClientOptions() *redis.UniversalOptions {
-	return &redis.UniversalOptions{Addrs: getTestAddresses(), Dialer: func(ctx context.Context, network, addr string) (net.Conn, error) {
-		conn, err := net.Dial("tcp4", addr)
-		return conn, err
-	}}
+	return &redis.UniversalOptions{Addrs: getTestAddresses()}
 }
 
 func makeTestStore(prefix string) subsystems.ComponentConfigurer[subsystems.PersistentDataStore] {
