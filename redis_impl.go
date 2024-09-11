@@ -2,6 +2,7 @@ package ldredis
 
 import (
 	"context"
+	"errors"
 	"github.com/launchdarkly/go-sdk-common/v3/ldlog"
 	"github.com/launchdarkly/go-server-sdk/v6/subsystems/ldstoretypes"
 	"github.com/redis/go-redis/v9"
@@ -59,7 +60,7 @@ func (store *redisDataStoreImpl) Get(
 ) (ldstoretypes.SerializedItemDescriptor, error) {
 	data, err := store.client.HGet(defaultContext(), store.keyForKind(kind), key).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			store.loggers.Debugf("Key: %s not found in \"%s\"", key, kind.GetName())
 			return ldstoretypes.SerializedItemDescriptor{}.NotFound(), nil
 		}
@@ -73,7 +74,7 @@ func (store *redisDataStoreImpl) GetAll(
 	kind ldstoretypes.DataKind,
 ) ([]ldstoretypes.KeyedSerializedItemDescriptor, error) {
 	values, err := store.client.HGetAll(defaultContext(), store.keyForKind(kind)).Result()
-	if err != nil && err != redis.Nil {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
 	}
 
@@ -132,7 +133,7 @@ func (store *redisDataStoreImpl) Upsert(
 				if err == nil {
 					result, err := pipe.Exec(defaultContext())
 					// if exec returned nothing, it means the watch was triggered and we should retry
-					if (err == nil && len(result) == 0) || err == redis.TxFailedErr {
+					if (err == nil && len(result) == 0) || errors.Is(err, redis.TxFailedErr) {
 						store.loggers.Debug("Concurrent modification detected, retrying")
 						return nil
 					}
