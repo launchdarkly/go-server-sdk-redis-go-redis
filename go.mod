@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/launchdarkly/go-sdk-common/v3 v3.1.0
-	github.com/launchdarkly/go-server-sdk/v7 v7.6.2
+	github.com/launchdarkly/go-server-sdk/v7 v7.6.3-0.20240916223552-d09e32de998b
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/stretchr/testify v1.9.0
 )
