@@ -1,7 +1,7 @@
 package ldredis
 
 import (
-	"github.com/launchdarkly/go-server-sdk/v6/subsystems"
+	"github.com/launchdarkly/go-server-sdk/v7/subsystems"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
