@@ -7,7 +7,7 @@ This library provides a [Redis](https://redis.io/)-backed persistence mechanism 
 
 The Redis client implementation it uses is [`go-redis`](https://github.com/redis/go-redis). This distinguishes it from the other Go SDK Redis integration, [`go-server-sdk-redis-redigo`](https://github.com/launchdarkly/go-server-sdk-redis-redigo), which uses the [`redigo`](https://github.com/gomodule/redigo) client (therefore the two projects have somewhat long and repetitive names). The main difference between the two is that `go-redis` supports cluster mode and `redigo` does not.
 
-This version of the library requires at least version 6.0.0 of the LaunchDarkly Go SDK.
+This version of the library requires at least version 7.0.0 of the LaunchDarkly Go SDK.
 
 The minimum Go version is 1.19.
 
@@ -21,8 +21,8 @@ This assumes that you have already installed the LaunchDarkly Go SDK.
 
 ```go
 import (
-    ld "github.com/launchdarkly/go-server-sdk/v6"
-    "github.com/launchdarkly/go-server-sdk/v6/ldcomponents"
+    ld "github.com/launchdarkly/go-server-sdk/v7"
+    "github.com/launchdarkly/go-server-sdk/v7/ldcomponents"
     ldredis "github.com/launchdarkly/go-server-sdk-redis-go-redis"
 )
 ```
@@ -30,7 +30,7 @@ import (
 2. When configuring your SDK client, add the Redis data store as a `PersistentDataStore`. You may specify any custom Redis options using the methods of `RedisDataStoreBuilder`. For instance, to customize the Redis URL:
 
 ```go
-    var config ld.Config{}
+    var config ld.Config
     config.DataStore = ldcomponents.PersistentDataStore(
         ldredis.DataStore().URL("redis://my-redis-host"),
     )
@@ -58,7 +58,7 @@ import (
 The LaunchDarkly SDK has a standard caching mechanism for any persistent data store, to reduce database traffic. This is configured through the SDK's `PersistentDataStoreBuilder` class as described the SDK documentation. For instance, to specify a cache TTL of 5 minutes:
 
 ```go
-    var config ld.Config{}
+    var config ld.Config
     config.DataStore = ldcomponents.PersistentDataStore(
         ldredis.DataStore(),
     ).CacheMinutes(5)
