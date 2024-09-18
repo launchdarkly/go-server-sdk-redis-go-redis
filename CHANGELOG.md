@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.0.0...v1.1.0) (2024-09-18)
+
+
+### Features
+
+* **deps:** update go-server-sdk dep to v7 ([#26](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/issues/26)) ([9fd7656](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/commit/9fd7656b0a7ac71c9d77f09e7cbc54c191898c08))
+
 ## [1.0.0](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.0.0-beta.1...v1.0.0) (2024-09-12)
 
 
