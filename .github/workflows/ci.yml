@@ -57,6 +57,11 @@ jobs:
           - 7003:7003
           - 7004:7004
           - 7005:7005
+        options: >-
+          --health-cmd "redis-cli -h redis-cluster -p 7000 ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 10
 
     container:
       image: ubuntu:22.04
@@ -69,7 +74,21 @@ jobs:
       - name: Deps
         run: |
           apt-get update
-          apt-get install -y make curl gcc
+          apt-get install -y make curl gcc redis-tools
+      - name: Wait for Redis Cluster
+        run: |
+          echo "Waiting for Redis cluster to be ready..."
+          for i in {1..30}; do
+            if redis-cli -h redis-cluster -p 7000 cluster info | grep -q "cluster_state:ok"; then
+              echo "Redis cluster is ready!"
+              redis-cli -h redis-cluster -p 7000 cluster nodes
+              exit 0
+            fi
+            echo "Attempt $i/30: Cluster not ready yet, waiting..."
+            sleep 2
+          done
+          echo "Redis cluster failed to become ready"
+          exit 1
       - uses: ./.github/actions/unit-tests
         with:
           upload-results: "false"
