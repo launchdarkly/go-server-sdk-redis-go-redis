@@ -52,7 +52,7 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install Redis Cluster
-        uses: pfapi/redis-cluster-service@v1
+        uses: pfapi/redis-cluster-service@48e2046b8592c10aac6881464082acc4433c0e24
       - name: Start Redis Cluster
         run: sudo systemctl start redis-cluster
       - name: Wait for Redis Cluster
