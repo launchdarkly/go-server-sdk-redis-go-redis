@@ -1,13 +1,13 @@
 name: Build and Test
 on:
   push:
-    branches: [ 'main', 'feat/**' ]
+    branches: ["main", "feat/**"]
     paths-ignore:
-      - '**.md' # Don't run CI on markdown changes.
+      - "**.md" # Don't run CI on markdown changes.
   pull_request:
-    branches: [ 'main', 'feat/**'  ]
+    branches: ["main", "feat/**"]
     paths-ignore:
-      - '**.md'
+      - "**.md"
 
 jobs:
   go-mod-tidy:
@@ -39,63 +39,39 @@ jobs:
     name: ${{ format('Linux, Go {0} with Redis Cluster', matrix.go-version) }}
     runs-on: ubuntu-latest
     env:
-      LD_TEST_REDIS_ADDRESSES: redis-node1:6379 redis-node2:6379 redis-node3:6379
+      LD_TEST_REDIS_ADDRESSES: localhost:7000 localhost:7001 localhost:7002
     needs: go-versions
     strategy:
       fail-fast: false
       matrix:
         go-version: ${{ fromJSON(needs.go-versions.outputs.matrix) }}
-    services:
-      redis-node1:
-        image: bitnami/redis-cluster:latest
-        env:
-          ALLOW_EMPTY_PASSWORD: yes
-          REDIS_NODES: redis-node1 redis-node2 redis-node3
-          REDIS_CLUSTER_REPLICAS: 0
-
-
-      redis-node2:
-        image: bitnami/redis-cluster:latest
-        env:
-          ALLOW_EMPTY_PASSWORD: yes
-          REDIS_NODES: redis-node1 redis-node2 redis-node3
-          REDIS_CLUSTER_REPLICAS: 0
-
-
-      redis-node3:
-        image: bitnami/redis-cluster:latest
-        env:
-          ALLOW_EMPTY_PASSWORD: yes
-          REDIS_NODES: redis-node1 redis-node2 redis-node3
-          REDIS_CLUSTER_REPLICAS: 0
-
-
-      redis-cluster-init:
-        image: bitnami/redis-cluster:latest
-        env:
-          ALLOW_EMPTY_PASSWORD: yes
-          REDIS_CLUSTER_CREATOR: yes
-          REDIS_NODES: redis-node1 redis-node2 redis-node3
-          REDIS_CLUSTER_REPLICAS: 0
-
-    container:
-      image: ubuntu:22.04
     steps:
-     - uses: actions/checkout@v4
-     - name: Setup Go ${{ matrix.go-version }}
-       uses: actions/setup-go@v5
-       with:
-         go-version: ${{ matrix.go-version }}
-     - name: Deps
-       run: |
-         apt-get update
-         apt-get install -y make curl gcc
-     - uses: ./.github/actions/unit-tests
-       with:
-         upload-results: 'false'
-
-
-
+      - uses: actions/checkout@v4
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Install Redis Cluster
+        uses: pfapi/redis-cluster-service@48e2046b8592c10aac6881464082acc4433c0e24
+      - name: Start Redis Cluster
+        run: sudo systemctl start redis-cluster
+      - name: Wait for Redis Cluster
+        run: |
+          echo "Waiting for Redis cluster to be ready..."
+          for i in {1..30}; do
+            if redis-cli -p 7000 cluster info | grep -q "cluster_state:ok"; then
+              echo "Redis cluster is ready!"
+              redis-cli -p 7000 cluster nodes
+              exit 0
+            fi
+            echo "Attempt $i/30: Cluster not ready yet, waiting..."
+            sleep 2
+          done
+          echo "Redis cluster failed to become ready"
+          exit 1
+      - uses: ./.github/actions/unit-tests
+        with:
+          upload-results: "false"
 
   test-windows:
     name: ${{ format('Windows, Go {0}', matrix.go-version) }}
