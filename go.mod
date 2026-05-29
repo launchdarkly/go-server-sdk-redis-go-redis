@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/launchdarkly/go-sdk-common/v4 v4.0.0
-	github.com/launchdarkly/go-server-sdk/v7 v7.14.8-0.20260527165936-9e2c40230b79
+	github.com/launchdarkly/go-server-sdk/v7 v7.15.1-0.20260529202418-8ab3995b9066
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/stretchr/testify v1.9.0
 )
