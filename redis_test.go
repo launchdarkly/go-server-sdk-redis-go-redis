@@ -74,13 +74,13 @@ func clearTestData(prefix string) error {
 	if isClusterMode() {
 		prefix = DefaultClusterPrefix + prefix
 		clusterClient := redis.NewClusterClient(&redis.ClusterOptions{Addrs: getTestAddresses()})
-		defer clusterClient.Close()
+		defer clusterClient.Close() //nolint:errcheck // test cleanup
 		return clusterClient.ForEachMaster(defaultContext(), func(ctx context.Context, client *redis.Client) error {
 			return deleteAllKeys(client)
 		})
 	} else {
 		client := redis.NewUniversalClient(makeClientOptions())
-		defer client.Close()
+		defer client.Close() //nolint:errcheck // test cleanup
 		return deleteAllKeys(client)
 	}
 }
