@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.1.0...v1.1.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* bump go-sdk-common to v4 for EasyJSON removal (v4 cascade) ([#37](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/issues/37)) ([f39b5f6](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/commit/f39b5f6edb758e8208269dca1f69d001fd09ee4a))
+
 ## [1.1.0](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.0.0...v1.1.0) (2024-09-18)
 
 
