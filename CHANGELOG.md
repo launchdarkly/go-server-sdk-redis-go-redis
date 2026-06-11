@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.1.1...v1.1.2) (2026-06-11)
+
+
+### Bug Fixes
+
+* **deps:** revert v4 core libraries to v3 ([#40](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/issues/40)) ([ebed381](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/commit/ebed381aeef31960ba586ab9ff2f39abdbb0dd47))
+
 ## [1.1.1](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.1.0...v1.1.1) (2026-06-03)
 
 
