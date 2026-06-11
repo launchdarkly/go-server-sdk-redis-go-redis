@@ -3,7 +3,7 @@ package ldredis
 import (
 	"context"
 	"errors"
-	"github.com/launchdarkly/go-sdk-common/v4/ldlog"
+	"github.com/launchdarkly/go-sdk-common/v3/ldlog"
 	"github.com/launchdarkly/go-server-sdk/v7/subsystems/ldstoretypes"
 	"github.com/redis/go-redis/v9"
 )
