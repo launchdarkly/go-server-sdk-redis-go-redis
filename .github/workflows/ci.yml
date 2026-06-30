@@ -13,7 +13,7 @@ jobs:
   go-mod-tidy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Go mod tidy
         run: |
           go mod tidy
@@ -46,7 +46,7 @@ jobs:
       matrix:
         go-version: ${{ fromJSON(needs.go-versions.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Go ${{ matrix.go-version }}
         uses: actions/setup-go@v6
         with:
@@ -82,7 +82,7 @@ jobs:
       matrix:
         go-version: ${{ fromJSON(needs.go-versions.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Go ${{ matrix.go-version }}
         uses: actions/setup-go@v6
         with:
