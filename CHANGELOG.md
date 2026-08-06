@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.1.2...v1.1.3) (2026-08-06)
+
+
+### Bug Fixes
+
+* Return an error when Upsert exhausts its retry attempts ([#49](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/issues/49)) ([8ea0b7b](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/commit/8ea0b7b5e4ba671c749a863e0aec2bc6bd4e4f83))
+
 ## [1.1.2](https://github.com/launchdarkly/go-server-sdk-redis-go-redis/compare/v1.1.1...v1.1.2) (2026-06-11)
 
 
