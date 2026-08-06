@@ -3,6 +3,8 @@ package ldredis
 import (
 	"context"
 	"errors"
+	"fmt"
+
 	"github.com/launchdarkly/go-sdk-common/v3/ldlog"
 	"github.com/launchdarkly/go-server-sdk/v7/subsystems/ldstoretypes"
 	"github.com/redis/go-redis/v9"
@@ -10,7 +12,12 @@ import (
 
 const (
 	defaultAddress = "localhost:6379"
-	maxRetries     = 10
+
+	// The maximum number of attempts Upsert will make before giving up. WATCH covers the entire
+	// hash for a data kind rather than the individual item key, so every concurrent update of that
+	// kind contends on the same key; without a limit a caller could be starved indefinitely during
+	// a burst of updates.
+	maxRetries = 10
 )
 
 // Internal implementation of the PersistentDataStore interface for Redis.
@@ -88,6 +95,9 @@ func (store *redisDataStoreImpl) GetAll(
 	return results, nil
 }
 
+// Upsert retries the update as long as another client keeps modifying the watched key, up to
+// maxRetries attempts. If the attempts run out, the item was not written and an error is returned
+// so that the SDK can treat the store as unavailable and refresh it once it recovers.
 func (store *redisDataStoreImpl) Upsert(
 	kind ldstoretypes.DataKind,
 	key string,
@@ -97,7 +107,6 @@ func (store *redisDataStoreImpl) Upsert(
 
 	finished := false
 	updated := false
-	var retryErr error
 
 	for availableRetries := maxRetries; availableRetries > 0; availableRetries-- {
 		err := store.client.Watch(defaultContext(), func(tx *redis.Tx) error {
@@ -162,7 +171,8 @@ func (store *redisDataStoreImpl) Upsert(
 			return updated, nil
 		}
 	}
-	return false, retryErr
+	return false, fmt.Errorf("failed to update key %q in %q after %d attempts",
+		key, kind.GetName(), maxRetries)
 }
 
 func (store *redisDataStoreImpl) IsInitialized() bool {

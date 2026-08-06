@@ -2,14 +2,18 @@ package ldredis
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/redis/go-redis/v9"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/launchdarkly/go-server-sdk/v7/subsystems"
+	"github.com/launchdarkly/go-server-sdk/v7/subsystems/ldstoreimpl"
+	"github.com/launchdarkly/go-server-sdk/v7/subsystems/ldstoretypes"
 	"github.com/launchdarkly/go-server-sdk/v7/testhelpers/storetest"
 )
 
@@ -87,4 +91,36 @@ func clearTestData(prefix string) error {
 
 func setConcurrentModificationHook(store subsystems.PersistentDataStore, hook func()) {
 	store.(*redisDataStoreImpl).testTxHook = hook
+}
+
+func TestUpsertGivesUpAfterMaxRetries(t *testing.T) {
+	prefix := "test-upsert-gives-up"
+	require.NoError(t, clearTestData(prefix))
+
+	store, err := makeTestStore(prefix).Build(subsystems.BasicClientContext{})
+	require.NoError(t, err)
+	defer store.Close() //nolint:errcheck // test cleanup
+
+	impl := store.(*redisDataStoreImpl)
+	kind := ldstoreimpl.Features()
+	hashKey := impl.keyForKind(kind)
+
+	// Touch the watched hash from a separate client on every attempt, so each transaction sees a
+	// concurrent modification and the key looks perpetually contended.
+	otherClient := redis.NewUniversalClient(makeClientOptions())
+	defer otherClient.Close() //nolint:errcheck // test cleanup
+	attempts := 0
+	impl.testTxHook = func() {
+		attempts++
+		require.NoError(t, otherClient.HSet(defaultContext(), hashKey, "flag-key", `{"key":"flag-key","version":1}`).Err())
+	}
+
+	updated, err := store.Upsert(kind, "flag-key", ldstoretypes.SerializedItemDescriptor{
+		Version:        2,
+		SerializedItem: []byte(`{"key":"flag-key","version":2}`),
+	})
+
+	require.False(t, updated, "an abandoned update must not be reported as an update")
+	require.EqualError(t, err, `failed to update key "flag-key" in "features" after 10 attempts`)
+	require.Equal(t, maxRetries, attempts, "Upsert should make exactly maxRetries attempts")
 }
