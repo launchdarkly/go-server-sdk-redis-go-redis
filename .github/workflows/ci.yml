@@ -20,7 +20,7 @@ jobs:
           git diff --exit-code -- go.mod go.sum
 
   go-versions:
-    uses: ./.github/workflows/go-versions.yml
+    uses: launchdarkly/gh-actions/.github/workflows/sdk-go-version-matrix.yml@main
 
   # Runs the common tasks (unit tests, lint, contract tests) for each Go version.
   test-linux:
