@@ -51,10 +51,31 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go-version }}
-      - name: Install Redis Cluster
-        uses: pfapi/redis-cluster-service@48e2046b8592c10aac6881464082acc4433c0e24
+      - name: Install Redis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y redis-server
+      # Run six nodes on ports 7000-7005: three primaries and one replica for each.
       - name: Start Redis Cluster
-        run: sudo systemctl start redis-cluster
+        run: |
+          for port in 7000 7001 7002 7003 7004 7005; do
+            mkdir -p "$RUNNER_TEMP/redis-$port"
+            redis-server --port "$port" --cluster-enabled yes \
+              --cluster-config-file nodes.conf --dir "$RUNNER_TEMP/redis-$port" \
+              --appendonly no --save '' --daemonize yes
+          done
+          # A daemonized node can still be starting. Wait until each node answers.
+          for port in 7000 7001 7002 7003 7004 7005; do
+            for i in {1..30}; do
+              [ "$(redis-cli -p "$port" ping 2>/dev/null)" = PONG ] && break
+              sleep 1
+            done
+            [ "$(redis-cli -p "$port" ping 2>/dev/null)" = PONG ] || { echo "Redis on port $port did not start"; exit 1; }
+          done
+          redis-cli --cluster create \
+            127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 \
+            127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 \
+            --cluster-replicas 1 --cluster-yes
       - name: Wait for Redis Cluster
         run: |
           echo "Waiting for Redis cluster to be ready..."
