@@ -9,7 +9,7 @@ The Redis client implementation it uses is [`go-redis`](https://github.com/redis
 
 This version of the library requires at least version 7.0.0 of the LaunchDarkly Go SDK.
 
-While this library requires Go 1.19 or later, you should use the latest patched version of a supported Go release.
+While this library requires Go 1.24 or later, you should use the latest patched version of a supported Go release.
 
 For more information, see also: [Using a persistent feature store](https://docs.launchdarkly.com/sdk/concepts/feature-store).
 
